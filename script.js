@@ -91,17 +91,32 @@ function renderProducts() {
   if (!grid) return;
 
   grid.innerHTML = products.map((product, index) => `
-    <div class="product-card bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-300 transform hover:-translate-y-2 reveal ${index > 2 ? 'delay-100' : ''}">
-      <div class="relative h-48 overflow-hidden group">
-        <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-        <div class="absolute top-2 left-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">${product.tag}</div>
+    <div class="product-card bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 transform hover:-translate-y-1 reveal ${index > 2 ? 'delay-100' : ''}">
+      <div class="product-image-wrap relative overflow-hidden group">
+        <div class="product-ribbon absolute top-3 left-3 z-10 bg-blue-100 text-blue-800 text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full">${product.tag}</div>
+        <img src="${product.image}" alt="${product.name}" class="product-image w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
       </div>
-      <div class="product-body p-6 flex flex-col text-gray-900 h-full">
-        <h3 class="product-title text-xl font-bold text-blue-900 mb-3">${product.name}</h3>
-        <div class="product-footer mt-auto pt-4 border-t border-gray-100">
-          <div class="text-2xl font-extrabold text-blue-700 mb-4">₹${product.price}</div>
-          <button onclick="addToCart(${product.id})" class="add-to-cart-btn w-full bg-yellow-400 text-blue-900 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-yellow-500 transition transform active:scale-95 shadow-md">
-            <i class="fas fa-cart-plus text-lg"></i> Add to Cart
+      <div class="product-body p-3 sm:p-4 flex flex-col text-gray-900 h-full">
+        <div class="product-category text-[10px] sm:text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-2">${product.category}</div>
+        <h3 class="product-title text-sm sm:text-base font-bold text-blue-900 leading-snug mb-3">${product.name}</h3>
+
+        <div class="product-meta flex items-center gap-2 mb-3">
+          <span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 text-[10px] sm:text-xs font-semibold px-2 py-1 rounded-full">
+            <i class="fas fa-star"></i> 4.8
+          </span>
+        </div>
+
+        <div class="product-footer mt-auto pt-3 border-t border-gray-100">
+          <div class="product-price-row flex items-end justify-between gap-2 mb-3">
+            <div>
+              <div class="text-lg sm:text-xl font-extrabold text-blue-700">₹${product.price}</div>
+              <div class="text-[10px] sm:text-xs text-gray-400 line-through">₹${Math.round(product.price * 1.4)}</div>
+            </div>
+            <span class="bg-red-50 text-red-600 text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full">Save 20%</span>
+          </div>
+          <button onclick="addToCart(${product.id})" class="add-to-cart-btn w-full bg-yellow-400 text-blue-900 font-bold py-2.5 sm:py-3 px-3 rounded-xl flex items-center justify-center gap-2 hover:bg-yellow-500 transition transform active:scale-95 shadow-sm">
+            <i class="fas fa-cart-plus text-sm sm:text-base"></i>
+            <span>Add to Cart</span>
           </button>
         </div>
       </div>
@@ -178,23 +193,23 @@ function updateCartUI() {
     `;
   } else {
     cartContainer.innerHTML = cart.map((item) => `
-      <div class="flex items-center gap-4 bg-white p-3 rounded-lg border shadow-sm text-gray-900">
-        <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded-md">
-        <div class="flex-grow">
+      <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-2xl border border-gray-200 shadow-sm text-gray-900">
+        <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded-xl border border-gray-200">
+        <div class="flex-grow min-w-0">
           <div class="flex items-start justify-between gap-2">
-            <div>
-              <h4 class="text-sm font-bold text-gray-800 line-clamp-1">${item.name}</h4>
-              <div class="text-blue-700 font-semibold text-sm">₹${item.price}</div>
+            <div class="min-w-0">
+              <h4 class="text-sm font-bold text-gray-800 line-clamp-2">${item.name}</h4>
+              <div class="text-blue-700 font-semibold text-sm mt-1">₹${item.price}</div>
             </div>
-            <button onclick="removeFromCart(${item.id})" class="text-gray-400 hover:text-red-500 text-sm" aria-label="Remove item">
+            <button onclick="removeFromCart(${item.id})" class="text-gray-400 hover:text-red-500 text-sm mt-1" aria-label="Remove item">
               <i class="fas fa-trash-alt"></i>
             </button>
           </div>
           <div class="flex items-center justify-between mt-3">
-            <div class="flex items-center gap-3">
-              <button onclick="updateQuantity(${item.id}, -1)" class="w-6 h-6 bg-gray-200 rounded flex items-center justify-center hover:bg-gray-300">-</button>
-              <span class="text-sm font-bold">${item.quantity}</span>
-              <button onclick="updateQuantity(${item.id}, 1)" class="w-6 h-6 bg-gray-200 rounded flex items-center justify-center hover:bg-gray-300">+</button>
+            <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-full px-2 py-1 shadow-sm">
+              <button onclick="updateQuantity(${item.id}, -1)" class="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 text-lg font-medium">-</button>
+              <span class="text-sm font-bold min-w-[18px] text-center">${item.quantity}</span>
+              <button onclick="updateQuantity(${item.id}, 1)" class="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 text-lg font-medium">+</button>
             </div>
             <span class="text-sm font-bold text-blue-900">₹${item.price * item.quantity}</span>
           </div>
@@ -393,34 +408,40 @@ function sendInvoiceToWhatsApp() {
     : 'No items';
 
   const message = `Hello ${COMPANY_NAME}, I would like to place an order.\n\nCustomer: ${customer.name}\nEmail: ${customer.email}\nPhone: ${customer.phone}\nAddress: ${customer.address}\nOrder ID: ${snapshot.orderId || generateOrderId()}\nItems: ${summary}\nTotal: ₹${snapshot.total}\nPlease confirm the order.`;
+  const waUrl = `https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
-  const encodedMessage = encodeURIComponent(message);
-  const waUrl = `https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodedMessage}`;
+  const invoiceDataUrl = currentInvoiceImage || generateInvoiceImage(snapshot.items, snapshot.total);
+  if (!invoiceDataUrl) return;
 
-  if (!currentInvoiceImage) {
-    generateInvoiceImage(snapshot.items, snapshot.total);
-  }
+  const tryNativeShare = async () => {
+    try {
+      const response = await fetch(invoiceDataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'enovecx-invoice.jpg', { type: 'image/jpeg' });
 
-  if (navigator.share && currentInvoiceImage) {
-    fetch(currentInvoiceImage)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const file = new File([blob], 'enovecx-invoice.jpg', { type: 'image/jpeg' });
-        navigator.share({
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
           title: 'Enovecx Invoice',
           text: message,
           files: [file]
-        }).catch(() => {
-          window.open(waUrl, '_blank');
         });
-      })
-      .catch(() => {
-        window.open(waUrl, '_blank');
-      });
-    return;
-  }
+        return true;
+      }
+    } catch (error) {
+      console.log('Native share unavailable, using WhatsApp fallback:', error);
+    }
 
-  window.open(waUrl, '_blank');
+    return false;
+  };
+
+  tryNativeShare().then((shared) => {
+    if (!shared) {
+      const popup = window.open(waUrl, '_blank', 'noopener,noreferrer');
+      if (!popup) {
+        window.location.href = waUrl;
+      }
+    }
+  });
 }
 
 function submitOrder() {
