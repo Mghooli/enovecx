@@ -10,6 +10,7 @@ const products = [
 const STORAGE_KEY = 'enovecx_cart';
 const BUSINESS_WHATSAPP_NUMBER = '917259975096';
 const COMPANY_NAME = 'Enovecx';
+const RAZORPAY_KEY_ID = 'rzp_test_your_key_here';
 let cart = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 let currentInvoiceImage = '';
 let currentOrderId = '';
@@ -288,7 +289,9 @@ function prepareInvoiceSnapshot() {
     items: orderItems,
     total: totalAmount,
     customer,
-    orderId: currentOrderId
+    orderId: currentOrderId,
+    paymentStatus: lastInvoicePayload.paymentStatus || 'pending',
+    paymentId: lastInvoicePayload.paymentId || ''
   };
 
   return lastInvoicePayload;
@@ -359,11 +362,16 @@ function generateInvoiceImage(orderItems, totalAmount) {
   ctx.lineTo(width - 24, y + 8);
   ctx.stroke();
 
+  const paymentLabel = lastInvoicePayload.paymentStatus === 'paid' ? 'Payment: Paid' : 'Payment: Pending';
+  ctx.font = '600 13px Arial';
+  ctx.fillStyle = '#334155';
+  ctx.fillText(paymentLabel, 24, y + 38);
+
   ctx.font = '700 18px Arial';
   ctx.fillStyle = '#0f172a';
-  ctx.fillText('Total', 24, y + 38);
+  ctx.fillText('Total', 24, y + 62);
   ctx.fillStyle = '#15803d';
-  ctx.fillText(`₹${totalAmount}`, width - 110, y + 38);
+  ctx.fillText(`₹${totalAmount}`, width - 110, y + 62);
 
   ctx.fillStyle = '#0f172a';
   ctx.font = '500 12px Arial';
@@ -413,38 +421,60 @@ function sendInvoiceToWhatsApp() {
   const invoiceDataUrl = currentInvoiceImage || generateInvoiceImage(snapshot.items, snapshot.total);
   if (!invoiceDataUrl) return;
 
-  const tryNativeShare = async () => {
-    try {
-      const response = await fetch(invoiceDataUrl);
-      const blob = await response.blob();
-      const file = new File([blob], 'enovecx-invoice.jpg', { type: 'image/jpeg' });
+  const popup = window.open(waUrl, '_blank', 'noopener,noreferrer');
+  if (popup) {
+    setTimeout(() => popup.focus(), 200);
+    return;
+  }
 
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: 'Enovecx Invoice',
-          text: message,
-          files: [file]
-        });
-        return true;
-      }
-    } catch (error) {
-      console.log('Native share unavailable, using WhatsApp fallback:', error);
-    }
-
-    return false;
-  };
-
-  tryNativeShare().then((shared) => {
-    if (!shared) {
-      const popup = window.open(waUrl, '_blank', 'noopener,noreferrer');
-      if (!popup) {
-        window.location.href = waUrl;
-      }
-    }
-  });
+  window.location.href = waUrl;
 }
 
-function submitOrder() {
+function handleCheckoutSubmit() {
+  const form = document.getElementById('checkout-form');
+  if (form && !form.reportValidity()) return;
+
+  if (RAZORPAY_KEY_ID && RAZORPAY_KEY_ID !== 'rzp_test_your_key_here' && window.Razorpay) {
+    const totalAmount = calculateTotal();
+    const customer = getCustomerFormData();
+
+    const razorpayOptions = {
+      key: RAZORPAY_KEY_ID,
+      amount: Math.round(totalAmount * 100),
+      currency: 'INR',
+      name: COMPANY_NAME,
+      description: 'Enovecx order payment',
+      image: 'https://placehold.co/200x80/1e3a8a/ffffff?text=Enovecx',
+      handler: function(response) {
+        submitOrder({
+          paymentStatus: 'paid',
+          paymentId: response.razorpay_payment_id
+        });
+      },
+      prefill: {
+        name: customer.name,
+        email: customer.email,
+        contact: customer.phone
+      },
+      theme: {
+        color: '#1d4ed8'
+      },
+      modal: {
+        ondismiss: function() {
+          console.log('Razorpay checkout dismissed by user.');
+        }
+      }
+    };
+
+    const razorpay = new window.Razorpay(razorpayOptions);
+    razorpay.open();
+    return;
+  }
+
+  submitOrder({ paymentStatus: 'pending' });
+}
+
+function submitOrder({ paymentStatus = 'pending', paymentId = '' } = {}) {
   const customer = getCustomerFormData();
   const orderItems = [...cart];
   const totalAmount = calculateTotal();
@@ -454,7 +484,9 @@ function submitOrder() {
     items: orderItems,
     total: totalAmount,
     customer,
-    orderId: currentOrderId
+    orderId: currentOrderId,
+    paymentStatus,
+    paymentId
   };
 
   generateInvoiceImage(orderItems, totalAmount);
@@ -464,7 +496,9 @@ function submitOrder() {
     orderId: currentOrderId,
     customer,
     items: orderItems,
-    total: totalAmount
+    total: totalAmount,
+    paymentStatus,
+    paymentId
   });
 
   cart = [];
